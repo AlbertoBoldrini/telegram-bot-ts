@@ -1,1 +1,1 @@
-# telegram-bot-js
+# Telegram Bot API for Node.js
