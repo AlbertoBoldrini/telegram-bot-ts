@@ -1,20 +1,141 @@
-import { EventEmitter }  from 'events';
 
-export abstract class TelegramAPI extends EventEmitter
+import * as Https  from 'https';
+
+/**
+ * All official methods of the Telegram Bot API without abstraction.
+ */
+export class TelegramBotAPI
 {
+    /**
+     * Each bot is given a unique authentication token when it is created. 
+     * The token looks something like 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
+     */
+    private token: string;
 
     /**
-     * Make an HTTPS POST request to the Telegram server    
+     * To use this class a token is **required** and can be obtained
+     * by talking to [@botfather](https://telegram.me/BotFather).
      */
-    public abstract async postRequest (method: string, params?: any): Promise<any>;
+    constructor (token: string)
+    {
+        // Token for the authentication
+        this.token = token;
+    }
 
+    /**
+     * Make an HTTPS POST multipart/form-data request to the Telegram server 
+     */
+    public async request (method: string, params: { [s: string]: any }): Promise<any>
+    {
+        return new Promise ((resolve, reject) =>
+        {
+            // The separator used in the multipart request
+            let boundary = 'FkEDmYLIktZjh6eaHViDpH0bbx';
+
+            // Parts the compose the body of the request
+            let parts: Array<Buffer> = []
+
+            for (let name in params)
+            {
+                // Print the headers of this parameter
+                parts.push (Buffer.from ('--' + boundary + '\r\nContent-Disposition: form-data; name="' + name + '"'));
+                
+                // If this parameter is a buffer send it as binary data
+                if (params[name].name && params[name].data)
+                    parts.push (Buffer.from('; filename="'+ params[name].name +'"\r\nContent-Type: application/octet-stream\r\n\r\n'), params[name].data);
+
+                // Else it is converted into a string
+                else
+                    parts.push (Buffer.from('\r\n\r\n' + params[name]));
+
+                // Conclude the part for this parameter
+                parts.push (Buffer.from('\r\n'));
+            }
+
+            if (parts.length)
+            {
+                // Add the final separator to conclude the request
+                parts.push (Buffer.from ('--' + boundary + '--\r\n'));
+            }
+
+            // Create the body concatenating the parts
+            let body: Buffer = Buffer.concat (parts);
+  
+            // Initialize the HTTP request using the built-in module
+            let request = Https.request (
+            { 
+                // All methods can be made with POST requests
+                method: 'POST', 
+
+                // The path contains the authentication token
+                // and the method of the Telegram API
+                path: '/bot' + this.token + '/' + method, 
+
+                // Hostname of Telegram's servers
+                hostname: 'api.telegram.org',
+
+                // Headers that specify the type and length of the body
+                headers: 
+                { 
+                    'Content-Type': 'multipart/form-data; boundary=' + boundary,
+                    'Content-Length': body.byteLength 
+                },
+
+            }, (response) =>
+            {
+                // The chunks that compose the HTTP response body
+                let chunks: Array<Buffer> = [];
+
+                // Set the callbacks for error in the errors and chunks
+                response.on ('error', (error: Error ) => reject (error));
+                response.on ('data',  (chunk: Buffer) => chunks.push (chunk));
+                
+                // Callback called when the response is completed.
+                // Now the concatenation of chunks is the whole response body.
+                response.on ('end', () =>
+                {
+                    try
+                    {
+                        // Produce a string from the chunks
+                        let json = Buffer.concat (chunks).toString('utf8');
+
+                        // Parse the string as a JSON
+                        let parsed = JSON.parse (json);
+                        
+                        // The response contains a JSON object, which always has a Boolean field ‘ok’
+                        // and may have an optional String field ‘description’ 
+                        // with a human-readable description of the result. 
+                        // If ‘ok’ equals true, the request was successful and the result of the query
+                        // can be found in the ‘result’ field. In case of an unsuccessful request, 
+                        // ‘ok’ equals false and the error is explained in the ‘description’. 
+                        parsed.ok ? resolve (parsed.result) : reject (new Error (parsed.description));
+                    }
+
+                    catch (error)
+                    {
+                        // Catch errors in the parsing phase 
+                        reject (error);
+                    }
+                });
+            });
+
+            // Catch errors during the request to the server
+            request.on ('error', error => reject (error));
+
+            // Write the body of the request and close the request.
+            request.write (body);
+            request.end ();
+        });
+    }
+
+    
     /**
      * Use this method to receive incoming updates using long polling (wiki). An Array
      * of Update objects is returned.    
      */
     public async getUpdates (params: GetUpdatesParams): Promise<Array<Update>>
     {
-        return this.postRequest ('getUpdates', params);
+        return this.request ('getUpdates', params);
     }
 
     /**
@@ -29,7 +150,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async setWebhook (params: SetWebhookParams): Promise<boolean>
     {
-        return this.postRequest ('setWebhook', params);
+        return this.request ('setWebhook', params);
     }
 
     /**
@@ -38,7 +159,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async deleteWebhook (): Promise<boolean>
     {
-        return this.postRequest ('deleteWebhook', {});
+        return this.request ('deleteWebhook', {});
     }
 
     /**
@@ -48,7 +169,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async getWebhookInfo (): Promise<WebhookInfo>
     {
-        return this.postRequest ('getWebhookInfo', {});
+        return this.request ('getWebhookInfo', {});
     }
 
     /**
@@ -57,7 +178,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async getMe (): Promise<User>
     {
-        return this.postRequest ('getMe', {});
+        return this.request ('getMe', {});
     }
 
     /**
@@ -65,7 +186,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendMessage (params: SendMessageParams): Promise<Message>
     {
-        return this.postRequest ('sendMessage', params);
+        return this.request ('sendMessage', params);
     }
 
     /**
@@ -74,7 +195,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async forwardMessage (params: ForwardMessageParams): Promise<Message>
     {
-        return this.postRequest ('forwardMessage', params);
+        return this.request ('forwardMessage', params);
     }
 
     /**
@@ -82,7 +203,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendPhoto (params: SendPhotoParams): Promise<Message>
     {
-        return this.postRequest ('sendPhoto', params);
+        return this.request ('sendPhoto', params);
     }
 
     /**
@@ -94,7 +215,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendAudio (params: SendAudioParams): Promise<Message>
     {
-        return this.postRequest ('sendAudio', params);
+        return this.request ('sendAudio', params);
     }
 
     /**
@@ -104,7 +225,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendDocument (params: SendDocumentParams): Promise<Message>
     {
-        return this.postRequest ('sendDocument', params);
+        return this.request ('sendDocument', params);
     }
 
     /**
@@ -115,7 +236,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendVideo (params: SendVideoParams): Promise<Message>
     {
-        return this.postRequest ('sendVideo', params);
+        return this.request ('sendVideo', params);
     }
 
     /**
@@ -125,7 +246,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendAnimation (params: SendAnimationParams): Promise<Message>
     {
-        return this.postRequest ('sendAnimation', params);
+        return this.request ('sendAnimation', params);
     }
 
     /**
@@ -137,7 +258,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendVoice (params: SendVoiceParams): Promise<Message>
     {
-        return this.postRequest ('sendVoice', params);
+        return this.request ('sendVoice', params);
     }
 
     /**
@@ -147,7 +268,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendVideoNote (params: SendVideoNoteParams): Promise<Message>
     {
-        return this.postRequest ('sendVideoNote', params);
+        return this.request ('sendVideoNote', params);
     }
 
     /**
@@ -156,7 +277,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendMediaGroup (params: SendMediaGroupParams): Promise<Array<Message>>
     {
-        return this.postRequest ('sendMediaGroup', params);
+        return this.request ('sendMediaGroup', params);
     }
 
     /**
@@ -165,7 +286,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendLocation (params: SendLocationParams): Promise<Message>
     {
-        return this.postRequest ('sendLocation', params);
+        return this.request ('sendLocation', params);
     }
 
     /**
@@ -177,7 +298,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async editMessageLiveLocation (params: EditMessageLiveLocationParams): Promise<Message | boolean>
     {
-        return this.postRequest ('editMessageLiveLocation', params);
+        return this.request ('editMessageLiveLocation', params);
     }
 
     /**
@@ -187,7 +308,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async stopMessageLiveLocation (params: StopMessageLiveLocationParams): Promise<Message | boolean>
     {
-        return this.postRequest ('stopMessageLiveLocation', params);
+        return this.request ('stopMessageLiveLocation', params);
     }
 
     /**
@@ -196,7 +317,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendVenue (params: SendVenueParams): Promise<Message>
     {
-        return this.postRequest ('sendVenue', params);
+        return this.request ('sendVenue', params);
     }
 
     /**
@@ -205,7 +326,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendContact (params: SendContactParams): Promise<Message>
     {
-        return this.postRequest ('sendContact', params);
+        return this.request ('sendContact', params);
     }
 
     /**
@@ -221,7 +342,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendChatAction (params: SendChatActionParams): Promise<boolean>
     {
-        return this.postRequest ('sendChatAction', params);
+        return this.request ('sendChatAction', params);
     }
 
     /**
@@ -230,7 +351,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async getUserProfilePhotos (params: GetUserProfilePhotosParams): Promise<UserProfilePhotos>
     {
-        return this.postRequest ('getUserProfilePhotos', params);
+        return this.request ('getUserProfilePhotos', params);
     }
 
     /**
@@ -244,7 +365,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async getFile (params: GetFileParams): Promise<File>
     {
-        return this.postRequest ('getFile', params);
+        return this.request ('getFile', params);
     }
 
     /**
@@ -259,7 +380,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async kickChatMember (params: KickChatMemberParams): Promise<boolean>
     {
-        return this.postRequest ('kickChatMember', params);
+        return this.request ('kickChatMember', params);
     }
 
     /**
@@ -270,7 +391,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async unbanChatMember (params: UnbanChatMemberParams): Promise<boolean>
     {
-        return this.postRequest ('unbanChatMember', params);
+        return this.request ('unbanChatMember', params);
     }
 
     /**
@@ -281,7 +402,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async restrictChatMember (params: RestrictChatMemberParams): Promise<boolean>
     {
-        return this.postRequest ('restrictChatMember', params);
+        return this.request ('restrictChatMember', params);
     }
 
     /**
@@ -292,7 +413,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async promoteChatMember (params: PromoteChatMemberParams): Promise<boolean>
     {
-        return this.postRequest ('promoteChatMember', params);
+        return this.request ('promoteChatMember', params);
     }
 
     /**
@@ -303,7 +424,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async exportChatInviteLink (params: ExportChatInviteLinkParams): Promise<string>
     {
-        return this.postRequest ('exportChatInviteLink', params);
+        return this.request ('exportChatInviteLink', params);
     }
 
     /**
@@ -315,7 +436,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async setChatPhoto (params: SetChatPhotoParams): Promise<boolean>
     {
-        return this.postRequest ('setChatPhoto', params);
+        return this.request ('setChatPhoto', params);
     }
 
     /**
@@ -327,7 +448,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async deleteChatPhoto (params: DeleteChatPhotoParams): Promise<boolean>
     {
-        return this.postRequest ('deleteChatPhoto', params);
+        return this.request ('deleteChatPhoto', params);
     }
 
     /**
@@ -339,7 +460,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async setChatTitle (params: SetChatTitleParams): Promise<boolean>
     {
-        return this.postRequest ('setChatTitle', params);
+        return this.request ('setChatTitle', params);
     }
 
     /**
@@ -349,7 +470,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async setChatDescription (params: SetChatDescriptionParams): Promise<boolean>
     {
-        return this.postRequest ('setChatDescription', params);
+        return this.request ('setChatDescription', params);
     }
 
     /**
@@ -360,7 +481,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async pinChatMessage (params: PinChatMessageParams): Promise<boolean>
     {
-        return this.postRequest ('pinChatMessage', params);
+        return this.request ('pinChatMessage', params);
     }
 
     /**
@@ -371,7 +492,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async unpinChatMessage (params: UnpinChatMessageParams): Promise<boolean>
     {
-        return this.postRequest ('unpinChatMessage', params);
+        return this.request ('unpinChatMessage', params);
     }
 
     /**
@@ -380,7 +501,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async leaveChat (params: LeaveChatParams): Promise<boolean>
     {
-        return this.postRequest ('leaveChat', params);
+        return this.request ('leaveChat', params);
     }
 
     /**
@@ -390,7 +511,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async getChat (params: GetChatParams): Promise<Chat>
     {
-        return this.postRequest ('getChat', params);
+        return this.request ('getChat', params);
     }
 
     /**
@@ -401,7 +522,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async getChatAdministrators (params: GetChatAdministratorsParams): Promise<Array<ChatMember>>
     {
-        return this.postRequest ('getChatAdministrators', params);
+        return this.request ('getChatAdministrators', params);
     }
 
     /**
@@ -409,7 +530,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async getChatMembersCount (params: GetChatMembersCountParams): Promise<number>
     {
-        return this.postRequest ('getChatMembersCount', params);
+        return this.request ('getChatMembersCount', params);
     }
 
     /**
@@ -418,7 +539,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async getChatMember (params: GetChatMemberParams): Promise<ChatMember>
     {
-        return this.postRequest ('getChatMember', params);
+        return this.request ('getChatMember', params);
     }
 
     /**
@@ -429,7 +550,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async setChatStickerSet (params: SetChatStickerSetParams): Promise<boolean>
     {
-        return this.postRequest ('setChatStickerSet', params);
+        return this.request ('setChatStickerSet', params);
     }
 
     /**
@@ -440,7 +561,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async deleteChatStickerSet (params: DeleteChatStickerSetParams): Promise<boolean>
     {
-        return this.postRequest ('deleteChatStickerSet', params);
+        return this.request ('deleteChatStickerSet', params);
     }
 
     /**
@@ -454,7 +575,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async answerCallbackQuery (params: AnswerCallbackQueryParams): Promise<boolean>
     {
-        return this.postRequest ('answerCallbackQuery', params);
+        return this.request ('answerCallbackQuery', params);
     }
 
     /**
@@ -464,7 +585,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async editMessageText (params: EditMessageTextParams): Promise<Message | boolean>
     {
-        return this.postRequest ('editMessageText', params);
+        return this.request ('editMessageText', params);
     }
 
     /**
@@ -474,7 +595,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async editMessageCaption (params: EditMessageCaptionParams): Promise<Message | boolean>
     {
-        return this.postRequest ('editMessageCaption', params);
+        return this.request ('editMessageCaption', params);
     }
 
     /**
@@ -487,7 +608,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async editMessageMedia (params: EditMessageMediaParams): Promise<Message | boolean>
     {
-        return this.postRequest ('editMessageMedia', params);
+        return this.request ('editMessageMedia', params);
     }
 
     /**
@@ -497,7 +618,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async editMessageReplyMarkup (params: EditMessageReplyMarkupParams): Promise<Message | boolean>
     {
-        return this.postRequest ('editMessageReplyMarkup', params);
+        return this.request ('editMessageReplyMarkup', params);
     }
 
     /**
@@ -511,7 +632,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async deleteMessage (params: DeleteMessageParams): Promise<boolean>
     {
-        return this.postRequest ('deleteMessage', params);
+        return this.request ('deleteMessage', params);
     }
 
     /**
@@ -520,7 +641,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendSticker (params: SendStickerParams): Promise<Message>
     {
-        return this.postRequest ('sendSticker', params);
+        return this.request ('sendSticker', params);
     }
 
     /**
@@ -529,7 +650,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async getStickerSet (params: GetStickerSetParams): Promise<StickerSet>
     {
-        return this.postRequest ('getStickerSet', params);
+        return this.request ('getStickerSet', params);
     }
 
     /**
@@ -539,7 +660,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async uploadStickerFile (params: UploadStickerFileParams): Promise<File>
     {
-        return this.postRequest ('uploadStickerFile', params);
+        return this.request ('uploadStickerFile', params);
     }
 
     /**
@@ -548,7 +669,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async createNewStickerSet (params: CreateNewStickerSetParams): Promise<boolean>
     {
-        return this.postRequest ('createNewStickerSet', params);
+        return this.request ('createNewStickerSet', params);
     }
 
     /**
@@ -557,7 +678,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async addStickerToSet (params: AddStickerToSetParams): Promise<boolean>
     {
-        return this.postRequest ('addStickerToSet', params);
+        return this.request ('addStickerToSet', params);
     }
 
     /**
@@ -566,7 +687,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async setStickerPositionInSet (params: SetStickerPositionInSetParams): Promise<boolean>
     {
-        return this.postRequest ('setStickerPositionInSet', params);
+        return this.request ('setStickerPositionInSet', params);
     }
 
     /**
@@ -575,7 +696,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async deleteStickerFromSet (params: DeleteStickerFromSetParams): Promise<boolean>
     {
-        return this.postRequest ('deleteStickerFromSet', params);
+        return this.request ('deleteStickerFromSet', params);
     }
 
     /**
@@ -584,7 +705,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async answerInlineQuery (params: AnswerInlineQueryParams): Promise<boolean>
     {
-        return this.postRequest ('answerInlineQuery', params);
+        return this.request ('answerInlineQuery', params);
     }
 
     /**
@@ -592,7 +713,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendInvoice (params: SendInvoiceParams): Promise<Message>
     {
-        return this.postRequest ('sendInvoice', params);
+        return this.request ('sendInvoice', params);
     }
 
     /**
@@ -603,7 +724,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async answerShippingQuery (params: AnswerShippingQueryParams): Promise<boolean>
     {
-        return this.postRequest ('answerShippingQuery', params);
+        return this.request ('answerShippingQuery', params);
     }
 
     /**
@@ -615,7 +736,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async answerPreCheckoutQuery (params: AnswerPreCheckoutQueryParams): Promise<boolean>
     {
-        return this.postRequest ('answerPreCheckoutQuery', params);
+        return this.request ('answerPreCheckoutQuery', params);
     }
 
     /**
@@ -630,7 +751,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async setPassportDataErrors (params: SetPassportDataErrorsParams): Promise<boolean>
     {
-        return this.postRequest ('setPassportDataErrors', params);
+        return this.request ('setPassportDataErrors', params);
     }
 
     /**
@@ -638,7 +759,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async sendGame (params: SendGameParams): Promise<Message>
     {
-        return this.postRequest ('sendGame', params);
+        return this.request ('sendGame', params);
     }
 
     /**
@@ -649,7 +770,7 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async setGameScore (params: SetGameScoreParams): Promise<Message | boolean>
     {
-        return this.postRequest ('setGameScore', params);
+        return this.request ('setGameScore', params);
     }
 
     /**
@@ -662,9 +783,12 @@ export abstract class TelegramAPI extends EventEmitter
      */
     public async getGameHighScores (params: GetGameHighScoresParams): Promise<Array<GameHighScore>>
     {
-        return this.postRequest ('getGameHighScores', params);
+        return this.request ('getGameHighScores', params);
     }
+
 }
+
+
 /**
  * This object represents an incoming update. At most one of the optional
  * parameters can be present in any given update.

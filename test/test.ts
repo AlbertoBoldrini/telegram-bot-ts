@@ -1,46 +1,16 @@
 
 import { TelegramBot } from '../src/client'
 
-import * as fs from 'fs';
+// replace the value below with the Telegram token you receive from @BotFather
+const token = '632870589:AAG10rKY8KO0iFlSYHMjPfttFA2ZHAeJevE';
 
+// Create a bot that uses 'polling' to fetch new updates
+const bot = new TelegramBot (token);
 
-
-(async ()=>
+// Listen for any kind of message. There are different kinds of
+// messages.
+bot.on ('message', msg => 
 {
-    try
-    {
-        let bot = new TelegramBot ('632870589:AAG10rKY8KO0iFlSYHMjPfttFA2ZHAeJevE');
-
-        bot.on ('error', error =>
-        {
-            console.log (error);
-        });
-
-        bot.on ('message', message =>
-        {
-            console.log (message);
-        });
-
-        fs.readFile ('./LICENSE', { }, async (err, buffer) =>
-        {
-            console.log (err);
-
-            let out = await bot.sendDocument ({ chat_id: 35481478, document: { name: "LICENCE", data: buffer }});
-
-            console.log (out);
-
-        });
-
-        
-
-        
-    } 
-
-    catch (error)
-    {
-        console.error (error);
-    }
-
-})();
-
-
+    // Send a message to the chat acknowledging receipt of their message
+    bot.api.sendMessage ({ chat_id: msg.chat.id, text: 'Received your message' });
+});

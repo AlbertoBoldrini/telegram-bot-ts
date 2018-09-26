@@ -111,13 +111,6 @@ const fs = require('fs');
             return makeComment(0, comment) + 'export interface ' + name + '\n{\n\n}\n';
         }
 
-        function makeMethodWithoutParams (methodName, comment)
-        {
-            let out = [];
-            out.push (makeComment(1, comment), '    public async ', methodName, ' (): Promise<', returnTypes[methodName] ,'>\n');
-            out.push (tab + '{\n' + tab + tab + 'return this.postRequest (\'', methodName, '\', {});\n' + tab + '}\n');
-        }
-
         let returnTypes =
         {
             'getUpdates': 'Array<Update>',
@@ -192,11 +185,6 @@ const fs = require('fs');
         let interfaces = [];
         let methods = [];
 
-        methods.push ('import { EventEmitter }  from \'events\';\n\n')
-        methods.push ('export abstract class TelegramAPI extends EventEmitter\n{\n');
-        methods.push (makeComment(1, 'Make an HTTPS POST request to the Telegram server'));
-        methods.push (tab + 'public abstract async postRequest (method: string, params?: any): Promise<any>;\n');
-
         for (let h4c of h4)
         {
             let interfaceName = h4c.innerText;
@@ -224,13 +212,13 @@ const fs = require('fs');
                 if (table && table.tagName === 'TABLE')
                 {
                     methods.push (makeComment(1, description), '    public async ', methodName, ' (params: ', interfaceName, '): Promise<', returnTypes[methodName] ,'>\n');
-                    methods.push ('    {\n        return this.postRequest (\'', methodName, '\', params);\n    }\n');
+                    methods.push ('    {\n        return this.request (\'', methodName, '\', params);\n    }\n');
                 }
 
                 else
                 {
                     methods.push (makeComment(1, description), '    public async ', methodName, ' (): Promise<', returnTypes[methodName] ,'>\n');
-                    methods.push ('    {\n        return this.postRequest (\'', methodName, '\', {});\n    }\n');
+                    methods.push ('    {\n        return this.request (\'', methodName, '\', {});\n    }\n');
                 }
             }
 
@@ -295,12 +283,24 @@ const fs = require('fs');
         interfaces.push (makeEmptyInferface('InlineQueryResult', 'This object represents one result of an inline query.'));
         interfaces.push (makeEmptyInferface('PassportElementError', 'This object represents an error in the Telegram Passport element which was submitted that should be resolved by the user.'));
 
-        methods.push ('}');
-
-        return methods.concat(interfaces).join('');
+        return { methods: methods.join(''), interfaces: interfaces.join('') };
     });
 
-    fs.writeFileSync ('src/api.ts', output);
+    fs.readFile ('gen/skel-api.ts', 'utf8', (error, code) =>
+    {
+        if (error)
+        {
+            console.error (error);
+            return;
+        }
+
+        code = code.replace ('/** METHODS **/', output.methods);
+        code = code.replace ('/** INTERFACES **/', output.interfaces);
+
+        fs.writeFileSync ('src/api.ts', code);
+    });
+
+    
 
     await browser.close();
 
