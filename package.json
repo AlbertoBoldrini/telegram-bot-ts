@@ -3,10 +3,10 @@
   "version": "0.0.1",
   "description": "Telegram Bot API for Node.js",
   "main": "build/index.js",
-  "types" : "build/index.d.ts",
+  "types": "build/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "node index.js"
+    "test": "node build/test/test.js"
   },
   "repository": {
     "type": "git",
