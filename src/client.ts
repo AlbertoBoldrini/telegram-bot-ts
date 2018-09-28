@@ -2,7 +2,7 @@
 import * as API from './api';
 import { EventEmitter } from 'events';
 
-export declare interface TelegramBot 
+export declare interface TelegramBotManager 
 {
     on (event: 'error',                 listener: (p: Error | string) => void): this;
     on (event: 'message',               listener: (p: API.Message) => void): this;
@@ -16,12 +16,12 @@ export declare interface TelegramBot
     on (event: 'pre_checkout_query',    listener: (p: API.PreCheckoutQuery) => void): this;
 }
 
-export class TelegramBot extends EventEmitter
+export class TelegramBotManager extends EventEmitter
 {
     /**
      * The object to make raw requests
      */
-    public readonly api: API.TelegramBotAPI;
+    public readonly api: API.TelegramBotRaw;
 
     /**
      * When this flag is true, when this object recives an update, 
@@ -48,7 +48,7 @@ export class TelegramBot extends EventEmitter
         super ();
 
         // The object to make raw requests
-        this.api = new API.TelegramBotAPI (token);
+        this.api = new API.TelegramBotRaw (token);
 
         // Start the polling of the updates
         this.start ();

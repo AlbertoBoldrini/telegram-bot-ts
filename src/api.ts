@@ -4,7 +4,7 @@ import * as Https  from 'https';
 /**
  * All official methods of the Telegram Bot API without abstraction.
  */
-export class TelegramBotAPI
+export class TelegramBotRaw
 {
     /**
      * Each bot is given a unique authentication token when it is created. 
