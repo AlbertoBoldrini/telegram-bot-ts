@@ -22,7 +22,10 @@ const bot = new TelegramBot.Raw (token);
 let promise = bot.sendMessage ({ chat_id: '<A chat id>', text: 'Hello world!' });
  ```
 
- - **Manager** (recommanded) that simplifies the management of updates. It is a EventEmitter and is possible to add listner.
+ - **Manager** (recommanded) that simplifies the management of updates. It is a EventEmitter and is possible to add listner. The events emitted have the same name of the update specified in the *Update* object in the [documentation](https://core.telegram.org/bots/api#update): *message*, *edited_message*, *channel_post*, ...
+ 
+ 
+It contains a member *api* that is the raw client discussed above.
 
  
  ```ts
