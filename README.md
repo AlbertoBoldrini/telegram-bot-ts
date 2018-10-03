@@ -11,22 +11,22 @@ Why use this module insead compared to others?
 
  - For all the requests it return a [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), this simplify the asynchronous procedures.
 
-## How to install
+# How to install
 Go in your project folder and run the following command:
 ```bash
 $ npm install --save @xalbex/telegram-bot
 ```
 
 
+# How to use
+This module exports different object to do the same things:
+- [Raw](#Raw) (only official methods)
+- [Emitter](#Emitter) (official methods + emitting an event for each new update)
 
-This module exports many object to the the same thing:
-- [Raw](#Raw)
-- [Emitter](#Emitter)
 
 
-
- #Raw
-that provide all the official methods without any abstraction. All methods accept the same parameters specified in the [Telegram Bot API documentation](https://core.telegram.org/bots/api) and return a Promise with the result specified in the official documentation.
+## Raw
+It provide all the official methods without any abstraction. All methods accept the same parameters specified in the [Telegram Bot API documentation](https://core.telegram.org/bots/api) and return a Promise with the result specified in the official documentation.
  ```ts
 import * as TelegramBot from 'telegram-bot-js'
 
@@ -40,7 +40,8 @@ const bot = new TelegramBot.Raw (token);
 let promise = bot.sendMessage ({ chat_id: '<A chat id>', text: 'Hello world!' });
  ```
 
- - **Emitter** (recommanded) that simplifies the management of updates. It is a EventEmitter and is possible to add listner. The events emitted have the same name of the update specified in the *Update* object in the [documentation](https://core.telegram.org/bots/api#update): *message*, *edited_message*, *channel_post*, ...
+## Emitter
+It simplifies the management of updates. It is a EventEmitter and is possible to add listners. The events emitted have the same names of the update types specified in the [Update](https://core.telegram.org/bots/api#update) object in the documentation: *message*, *edited_message*, *channel_post*, ...
  
  
 It contains a member *api* that is the raw client discussed above.
