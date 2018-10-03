@@ -37,8 +37,8 @@ const token = '<BOT-TOKEN>';
 // Create an object that manages the Telegram bot and receives the updates.
 const bot = new TelegramBot.Emitter (token);
 
-// Listen for any kind of message. There are different kinds of
-// messages.
+// Listen for message events. The list of possible events is specified 
+// here (https://core.telegram.org/bots/api#update)
 bot.on ('message', async msg => 
 {
     // Send a message to the chat acknowledging receipt of their message
