@@ -1,6 +1,6 @@
 {
-  "name": "telegram-bot",
-  "version": "0.0.1",
+  "name": "@xalbex/telegram-bot",
+  "version": "0.0.3",
   "description": "Telegram Bot API for Node.js",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -20,9 +20,9 @@
   "author": "Alberto Boldrini",
   "license": "MIT",
   "dependencies": {
-    "@types/node": "^10.10.3"
   },
   "devDependencies": {
-    "typescript": "^3.0.3"
+    "typescript": "^3.0.3",
+    "@types/node": "^10.10.3"
   }
 }

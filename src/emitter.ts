@@ -2,7 +2,7 @@
 import * as API from './api';
 import { EventEmitter } from 'events';
 
-export declare interface TelegramBotManager 
+export declare interface TelegramBotEmitter
 {
     on (event: 'error',                 listener: (p: Error | string) => void): this;
     on (event: 'message',               listener: (p: API.Message) => void): this;
@@ -16,7 +16,7 @@ export declare interface TelegramBotManager
     on (event: 'pre_checkout_query',    listener: (p: API.PreCheckoutQuery) => void): this;
 }
 
-export class TelegramBotManager extends EventEmitter
+export class TelegramBotEmitter extends EventEmitter
 {
     /**
      * The object to make raw requests
@@ -28,7 +28,6 @@ export class TelegramBotManager extends EventEmitter
      * immediately re-send another getUpdates request for next updates.
      */
     private continueUpdates: boolean = false;
-
 
     /**
      * Last update_id received. Update identifiers 

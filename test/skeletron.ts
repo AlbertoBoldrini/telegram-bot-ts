@@ -6,7 +6,7 @@ import * as TelegramBot from '../index'
 const token = '632870589:AAG10rKY8KO0iFlSYHMjPfttFA2ZHAeJevE';
 
 // Create an object that manages the Telegram bot and receives the updates.
-const bot = new TelegramBot.Manager (token);
+const bot = new TelegramBot.Emitter (token);
 
 // Add a callback for every possible update
 
