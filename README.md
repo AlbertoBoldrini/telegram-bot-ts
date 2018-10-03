@@ -1,14 +1,32 @@
 # Telegram Bot API for Node.js
 
-This is a Node.js module to comunicate with official Telegram Bot API. To use this module the bot token is **required** and can be obtained by talking to [@botfather](https://telegram.me/BotFather).
+This is a Node.js module to communicate with official Telegram Bot API. To use this module the bot token is **required** and can be obtained by talking to [@botfather](https://telegram.me/BotFather).
 
-This module is written in Typescript and contains the definitions of all official methods and structures useful for type checking.
+Why use this module insead compared to others?
+ - It has no dependencies. It reduce the size of your project.
 
-For all the requests it return a [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), this simplify the asynchronous procedures.
+ - It is written in Typescript and contains the definitions of all [official methods and structures](https://core.telegram.org/bots/api) useful for type checking. This means that the editor can suggest you errors, name and the official documentation for each member.
+ 
+ - It can be used without or with a little abstraction. This allows you to finely control your bot without being limited by this module.
+
+ - For all the requests it return a [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), this simplify the asynchronous procedures.
+
+## How to install
+Go in your project folder and run the following command:
+```bash
+$ npm install --save @xalbex/telegram-bot
+```
 
 
-This module exports two objects:
- - **Raw** that provide all the official methods without any abstraction. All methods accept the same parameters specified in the [Telegram Bot API documentation](https://core.telegram.org/bots/api) and return a Promise with the result specified in the official documentation.
+
+This module exports many object to the the same thing:
+- [Raw](#Raw)
+- [Emitter](#Emitter)
+
+
+
+ #Raw
+that provide all the official methods without any abstraction. All methods accept the same parameters specified in the [Telegram Bot API documentation](https://core.telegram.org/bots/api) and return a Promise with the result specified in the official documentation.
  ```ts
 import * as TelegramBot from 'telegram-bot-js'
 
