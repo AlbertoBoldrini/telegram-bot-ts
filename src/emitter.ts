@@ -21,7 +21,7 @@ export class TelegramBotEmitter extends EventEmitter
     /**
      * The object to make raw requests
      */
-    public readonly api: API.TelegramBotRaw;
+    public readonly api: API.TelegramBot;
 
     /**
      * When this flag is true, when this object recives an update, 
@@ -47,7 +47,7 @@ export class TelegramBotEmitter extends EventEmitter
         super();
 
         // The object to make raw requests
-        this.api = new API.TelegramBotRaw(token);
+        this.api = new API.TelegramBot(token);
 
         // Start the polling of the updates
         this.start();
@@ -105,7 +105,7 @@ export class TelegramBotEmitter extends EventEmitter
             }
 
             catch (error) {
-                
+
                 // It emits the error raised in the getUpdates request.
                 this.emit ('error', error);
             }
