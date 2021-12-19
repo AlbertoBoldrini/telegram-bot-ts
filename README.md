@@ -10,7 +10,7 @@ Why use this module instead of others?
  
  - It can be used without or with a little abstraction. This allows you to finely control your bot without being limited by this module.
 
- - For all the requests it return a [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), this simplify the asynchronous procedures.
+ - All requests return a [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), simplifying the asynchronous procedures.
 
 # How to install
 Copy the `src/api.ts` file in your project. 
