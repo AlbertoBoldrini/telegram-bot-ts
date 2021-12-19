@@ -1,5 +1,5 @@
 
-import * as Https  from 'https';
+import * as Https from 'https';
 
 /**
  * All official methods of the Telegram Bot API without abstraction.
@@ -16,8 +16,8 @@ export class TelegramBotRaw
      * To use this class a token is **required** and can be obtained
      * by talking to [@botfather](https://telegram.me/BotFather).
      */
-    constructor (token: string)
-    {
+    constructor(token: string) {
+
         // Token for the authentication
         this.token = token;
     }
@@ -25,45 +25,43 @@ export class TelegramBotRaw
     /**
      * Make an HTTPS POST multipart/form-data request to the Telegram server 
      */
-    public async request (method: string, params: { [s: string]: any }): Promise<any>
-    {
-        return new Promise ((resolve, reject) =>
-        {
+    public async request(method: string, params: { [s: string]: any }): Promise<any> {
+
+        return new Promise((resolve, reject) => {
+
             // The separator used in the multipart request
             let boundary = 'FkEDmYLIktZjh6eaHViDpH0bbx';
 
             // Parts the compose the body of the request
             let parts: Array<Buffer> = []
 
-            for (let name in params)
-            {
+            for (let name in params) {
+
                 // Print the headers of this parameter
-                parts.push (Buffer.from ('--' + boundary + '\r\nContent-Disposition: form-data; name="' + name + '"'));
+                parts.push(Buffer.from('--' + boundary + '\r\nContent-Disposition: form-data; name="' + name + '"'));
                 
                 // If this parameter is a buffer send it as binary data
                 if (params[name].name && params[name].data)
-                    parts.push (Buffer.from('; filename="'+ params[name].name +'"\r\nContent-Type: application/octet-stream\r\n\r\n'), params[name].data);
+                    parts.push(Buffer.from('; filename="'+ params[name].name +'"\r\nContent-Type: application/octet-stream\r\n\r\n'), params[name].data);
 
                 // Else it is converted into a string
                 else
-                    parts.push (Buffer.from('\r\n\r\n' + params[name]));
+                    parts.push(Buffer.from('\r\n\r\n' + params[name]));
 
                 // Conclude the part for this parameter
-                parts.push (Buffer.from('\r\n'));
+                parts.push(Buffer.from('\r\n'));
             }
 
             if (parts.length)
-            {
                 // Add the final separator to conclude the request
-                parts.push (Buffer.from ('--' + boundary + '--\r\n'));
-            }
+                parts.push(Buffer.from('--' + boundary + '--\r\n'));
 
             // Create the body concatenating the parts
-            let body: Buffer = Buffer.concat (parts);
+            let body: Buffer = Buffer.concat(parts);
   
             // Initialize the HTTP request using the built-in module
-            let request = Https.request (
-            { 
+            let request = Https.request({ 
+
                 // All methods can be made with POST requests
                 method: 'POST', 
 
@@ -75,32 +73,31 @@ export class TelegramBotRaw
                 hostname: 'api.telegram.org',
 
                 // Headers that specify the type and length of the body
-                headers: 
-                { 
+                headers: { 
                     'Content-Type': 'multipart/form-data; boundary=' + boundary,
                     'Content-Length': body.byteLength 
                 },
 
-            }, (response) =>
-            {
+            }, (response) => {
+
                 // The chunks that compose the HTTP response body
                 let chunks: Array<Buffer> = [];
 
                 // Set the callbacks for error in the errors and chunks
-                response.on ('error', (error: Error ) => reject (error));
-                response.on ('data',  (chunk: Buffer) => chunks.push (chunk));
+                response.on('error', (error: Error ) => reject(error));
+                response.on('data',  (chunk: Buffer) => chunks.push(chunk));
                 
                 // Callback called when the response is completed.
                 // Now the concatenation of chunks is the whole response body.
-                response.on ('end', () =>
-                {
-                    try
-                    {
+                response.on('end', () => {
+
+                    try {
+                        
                         // Produce a string from the chunks
-                        let json = Buffer.concat (chunks).toString('utf8');
+                        let json = Buffer.concat(chunks).toString('utf8');
 
                         // Parse the string as a JSON
-                        let parsed = JSON.parse (json);
+                        let parsed = JSON.parse(json);
                         
                         // The response contains a JSON object, which always has a Boolean field ‘ok’
                         // and may have an optional String field ‘description’ 
@@ -108,23 +105,23 @@ export class TelegramBotRaw
                         // If ‘ok’ equals true, the request was successful and the result of the query
                         // can be found in the ‘result’ field. In case of an unsuccessful request, 
                         // ‘ok’ equals false and the error is explained in the ‘description’. 
-                        parsed.ok ? resolve (parsed.result) : reject (new Error (parsed.description));
+                        parsed.ok ? resolve(parsed.result) : reject(new Error(parsed.description));
                     }
 
-                    catch (error)
-                    {
+                    catch(error) {
+
                         // Catch errors in the parsing phase 
-                        reject (error);
+                        reject(error);
                     }
                 });
             });
 
             // Catch errors during the request to the server
-            request.on ('error', error => reject (error));
+            request.on('error', error => reject(error));
 
             // Write the body of the request and close the request.
-            request.write (body);
-            request.end ();
+            request.write(body);
+            request.end();
         });
     }
 

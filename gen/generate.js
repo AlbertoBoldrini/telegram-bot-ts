@@ -1,3 +1,7 @@
+/**
+ * This script is used to procedurally generate the api.ts file.
+ * It is not required to run the module.
+ */
 
 const puppeteer = require('puppeteer');
 const fs = require('fs');
@@ -244,14 +248,14 @@ const fs = require('fs');
 
                 if (table && table.tagName === 'TABLE')
                 {
-                    methods.push (makeComment(1, description), '    public async ', methodName, ' (params: ', interfaceName, '): Promise<', returnType ,'>\n');
-                    methods.push ('    {\n        return this.request (\'', methodName, '\', params);\n    }\n');
+                    methods.push (makeComment(1, description), '    public async ', methodName, '(params: ', interfaceName, '): Promise<', returnType ,'> {\n');
+                    methods.push ('        return this.request(\'', methodName, '\', params);\n    }\n');
                 }
 
                 else
                 {
-                    methods.push (makeComment(1, description), '    public async ', methodName, ' (): Promise<', returnType ,'>\n');
-                    methods.push ('    {\n        return this.request (\'', methodName, '\', {});\n    }\n');
+                    methods.push (makeComment(1, description), '    public async ', methodName, '(): Promise<', returnType ,'> {\n');
+                    methods.push ('        return this.request(\'', methodName, '\', {});\n    }\n');
                 }
             }
 

@@ -12,7 +12,7 @@ Why use this module instead of others?
  - For all the requests it return a [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), this simplify the asynchronous procedures.
 
 # How to install
-Copy the api.ts file in your project. 
+Copy the src/api.ts file in your project. 
 Import the class *TelegramBotRaw* and all the interfaces you need.
 If you want you can copy also the file emitter.ts which contains the class TelegramBotEmitter that can help you to setup a message loop.
 

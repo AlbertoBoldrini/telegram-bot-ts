@@ -1,5 +1,5 @@
 
-import * as Https  from 'https';
+import * as Https from 'https';
 
 /**
  * All official methods of the Telegram Bot API without abstraction.
@@ -16,8 +16,8 @@ export class TelegramBotRaw
      * To use this class a token is **required** and can be obtained
      * by talking to [@botfather](https://telegram.me/BotFather).
      */
-    constructor (token: string)
-    {
+    constructor(token: string) {
+
         // Token for the authentication
         this.token = token;
     }
@@ -25,45 +25,43 @@ export class TelegramBotRaw
     /**
      * Make an HTTPS POST multipart/form-data request to the Telegram server 
      */
-    public async request (method: string, params: { [s: string]: any }): Promise<any>
-    {
-        return new Promise ((resolve, reject) =>
-        {
+    public async request(method: string, params: { [s: string]: any }): Promise<any> {
+
+        return new Promise((resolve, reject) => {
+
             // The separator used in the multipart request
             let boundary = 'FkEDmYLIktZjh6eaHViDpH0bbx';
 
             // Parts the compose the body of the request
             let parts: Array<Buffer> = []
 
-            for (let name in params)
-            {
+            for (let name in params) {
+
                 // Print the headers of this parameter
-                parts.push (Buffer.from ('--' + boundary + '\r\nContent-Disposition: form-data; name="' + name + '"'));
+                parts.push(Buffer.from('--' + boundary + '\r\nContent-Disposition: form-data; name="' + name + '"'));
                 
                 // If this parameter is a buffer send it as binary data
                 if (params[name].name && params[name].data)
-                    parts.push (Buffer.from('; filename="'+ params[name].name +'"\r\nContent-Type: application/octet-stream\r\n\r\n'), params[name].data);
+                    parts.push(Buffer.from('; filename="'+ params[name].name +'"\r\nContent-Type: application/octet-stream\r\n\r\n'), params[name].data);
 
                 // Else it is converted into a string
                 else
-                    parts.push (Buffer.from('\r\n\r\n' + params[name]));
+                    parts.push(Buffer.from('\r\n\r\n' + params[name]));
 
                 // Conclude the part for this parameter
-                parts.push (Buffer.from('\r\n'));
+                parts.push(Buffer.from('\r\n'));
             }
 
             if (parts.length)
-            {
                 // Add the final separator to conclude the request
-                parts.push (Buffer.from ('--' + boundary + '--\r\n'));
-            }
+                parts.push(Buffer.from('--' + boundary + '--\r\n'));
 
             // Create the body concatenating the parts
-            let body: Buffer = Buffer.concat (parts);
+            let body: Buffer = Buffer.concat(parts);
   
             // Initialize the HTTP request using the built-in module
-            let request = Https.request (
-            { 
+            let request = Https.request({ 
+
                 // All methods can be made with POST requests
                 method: 'POST', 
 
@@ -75,32 +73,31 @@ export class TelegramBotRaw
                 hostname: 'api.telegram.org',
 
                 // Headers that specify the type and length of the body
-                headers: 
-                { 
+                headers: { 
                     'Content-Type': 'multipart/form-data; boundary=' + boundary,
                     'Content-Length': body.byteLength 
                 },
 
-            }, (response) =>
-            {
+            }, (response) => {
+
                 // The chunks that compose the HTTP response body
                 let chunks: Array<Buffer> = [];
 
                 // Set the callbacks for error in the errors and chunks
-                response.on ('error', (error: Error ) => reject (error));
-                response.on ('data',  (chunk: Buffer) => chunks.push (chunk));
+                response.on('error', (error: Error ) => reject(error));
+                response.on('data',  (chunk: Buffer) => chunks.push(chunk));
                 
                 // Callback called when the response is completed.
                 // Now the concatenation of chunks is the whole response body.
-                response.on ('end', () =>
-                {
-                    try
-                    {
+                response.on('end', () => {
+
+                    try {
+                        
                         // Produce a string from the chunks
-                        let json = Buffer.concat (chunks).toString('utf8');
+                        let json = Buffer.concat(chunks).toString('utf8');
 
                         // Parse the string as a JSON
-                        let parsed = JSON.parse (json);
+                        let parsed = JSON.parse(json);
                         
                         // The response contains a JSON object, which always has a Boolean field ‘ok’
                         // and may have an optional String field ‘description’ 
@@ -108,23 +105,23 @@ export class TelegramBotRaw
                         // If ‘ok’ equals true, the request was successful and the result of the query
                         // can be found in the ‘result’ field. In case of an unsuccessful request, 
                         // ‘ok’ equals false and the error is explained in the ‘description’. 
-                        parsed.ok ? resolve (parsed.result) : reject (new Error (parsed.description));
+                        parsed.ok ? resolve(parsed.result) : reject(new Error(parsed.description));
                     }
 
-                    catch (error)
-                    {
+                    catch(error) {
+
                         // Catch errors in the parsing phase 
-                        reject (error);
+                        reject(error);
                     }
                 });
             });
 
             // Catch errors during the request to the server
-            request.on ('error', error => reject (error));
+            request.on('error', error => reject(error));
 
             // Write the body of the request and close the request.
-            request.write (body);
-            request.end ();
+            request.write(body);
+            request.end();
         });
     }
 
@@ -133,9 +130,8 @@ export class TelegramBotRaw
      * Use this method to receive incoming updates using long polling (wiki). An Array
      * of Update objects is returned.    
      */
-    public async getUpdates (params: GetUpdatesParams): Promise<Array<Update>>
-    {
-        return this.request ('getUpdates', params);
+    public async getUpdates(params: GetUpdatesParams): Promise<Array<Update>> {
+        return this.request('getUpdates', params);
     }
 
     /**
@@ -148,18 +144,16 @@ export class TelegramBotRaw
      * https://www.example.com/<token>. Since nobody else knows your bot's token, you
      * can be pretty sure it's us.    
      */
-    public async setWebhook (params: SetWebhookParams): Promise<boolean>
-    {
-        return this.request ('setWebhook', params);
+    public async setWebhook(params: SetWebhookParams): Promise<boolean> {
+        return this.request('setWebhook', params);
     }
 
     /**
      * Use this method to remove webhook integration if you decide to switch back to
      * getUpdates. Returns True on success.    
      */
-    public async deleteWebhook (params: DeleteWebhookParams): Promise<boolean>
-    {
-        return this.request ('deleteWebhook', params);
+    public async deleteWebhook(params: DeleteWebhookParams): Promise<boolean> {
+        return this.request('deleteWebhook', params);
     }
 
     /**
@@ -167,18 +161,16 @@ export class TelegramBotRaw
      * success, returns a WebhookInfo object. If the bot is using getUpdates, will
      * return an object with the url field empty.    
      */
-    public async getWebhookInfo (): Promise<WebhookInfo>
-    {
-        return this.request ('getWebhookInfo', {});
+    public async getWebhookInfo(): Promise<WebhookInfo> {
+        return this.request('getWebhookInfo', {});
     }
 
     /**
      * A simple method for testing your bot's authentication token. Requires no
      * parameters. Returns basic information about the bot in form of a User object.    
      */
-    public async getMe (): Promise<User>
-    {
-        return this.request ('getMe', {});
+    public async getMe(): Promise<User> {
+        return this.request('getMe', {});
     }
 
     /**
@@ -189,9 +181,8 @@ export class TelegramBotRaw
      * the cloud Bot API server for 10 minutes. Returns True on success. Requires no
      * parameters.    
      */
-    public async logOut (): Promise<boolean>
-    {
-        return this.request ('logOut', {});
+    public async logOut(): Promise<boolean> {
+        return this.request('logOut', {});
     }
 
     /**
@@ -201,26 +192,23 @@ export class TelegramBotRaw
      * error 429 in the first 10 minutes after the bot is launched. Returns True on
      * success. Requires no parameters.    
      */
-    public async close (): Promise<boolean>
-    {
-        return this.request ('close', {});
+    public async close(): Promise<boolean> {
+        return this.request('close', {});
     }
 
     /**
      * Use this method to send text messages. On success, the sent Message is returned.    
      */
-    public async sendMessage (params: SendMessageParams): Promise<Message>
-    {
-        return this.request ('sendMessage', params);
+    public async sendMessage(params: SendMessageParams): Promise<Message> {
+        return this.request('sendMessage', params);
     }
 
     /**
      * Use this method to forward messages of any kind. Service messages can't be
      * forwarded. On success, the sent Message is returned.    
      */
-    public async forwardMessage (params: ForwardMessageParams): Promise<Message>
-    {
-        return this.request ('forwardMessage', params);
+    public async forwardMessage(params: ForwardMessageParams): Promise<Message> {
+        return this.request('forwardMessage', params);
     }
 
     /**
@@ -229,17 +217,15 @@ export class TelegramBotRaw
      * but the copied message doesn't have a link to the original message. Returns the
      * MessageId of the sent message on success.    
      */
-    public async copyMessage (params: CopyMessageParams): Promise<MessageId>
-    {
-        return this.request ('copyMessage', params);
+    public async copyMessage(params: CopyMessageParams): Promise<MessageId> {
+        return this.request('copyMessage', params);
     }
 
     /**
      * Use this method to send photos. On success, the sent Message is returned.    
      */
-    public async sendPhoto (params: SendPhotoParams): Promise<Message>
-    {
-        return this.request ('sendPhoto', params);
+    public async sendPhoto(params: SendPhotoParams): Promise<Message> {
+        return this.request('sendPhoto', params);
     }
 
     /**
@@ -249,9 +235,8 @@ export class TelegramBotRaw
      * to 50 MB in size, this limit may be changed in the future.For sending voice
      * messages, use the sendVoice method instead.    
      */
-    public async sendAudio (params: SendAudioParams): Promise<Message>
-    {
-        return this.request ('sendAudio', params);
+    public async sendAudio(params: SendAudioParams): Promise<Message> {
+        return this.request('sendAudio', params);
     }
 
     /**
@@ -259,9 +244,8 @@ export class TelegramBotRaw
      * Bots can currently send files of any type of up to 50 MB in size, this limit may
      * be changed in the future.    
      */
-    public async sendDocument (params: SendDocumentParams): Promise<Message>
-    {
-        return this.request ('sendDocument', params);
+    public async sendDocument(params: SendDocumentParams): Promise<Message> {
+        return this.request('sendDocument', params);
     }
 
     /**
@@ -270,9 +254,8 @@ export class TelegramBotRaw
      * can currently send video files of up to 50 MB in size, this limit may be changed
      * in the future.    
      */
-    public async sendVideo (params: SendVideoParams): Promise<Message>
-    {
-        return this.request ('sendVideo', params);
+    public async sendVideo(params: SendVideoParams): Promise<Message> {
+        return this.request('sendVideo', params);
     }
 
     /**
@@ -280,9 +263,8 @@ export class TelegramBotRaw
      * sound). On success, the sent Message is returned. Bots can currently send
      * animation files of up to 50 MB in size, this limit may be changed in the future.    
      */
-    public async sendAnimation (params: SendAnimationParams): Promise<Message>
-    {
-        return this.request ('sendAnimation', params);
+    public async sendAnimation(params: SendAnimationParams): Promise<Message> {
+        return this.request('sendAnimation', params);
     }
 
     /**
@@ -292,9 +274,8 @@ export class TelegramBotRaw
      * success, the sent Message is returned. Bots can currently send voice messages of
      * up to 50 MB in size, this limit may be changed in the future.    
      */
-    public async sendVoice (params: SendVoiceParams): Promise<Message>
-    {
-        return this.request ('sendVoice', params);
+    public async sendVoice(params: SendVoiceParams): Promise<Message> {
+        return this.request('sendVoice', params);
     }
 
     /**
@@ -302,9 +283,8 @@ export class TelegramBotRaw
      * minute long. Use this method to send video messages. On success, the sent
      * Message is returned.    
      */
-    public async sendVideoNote (params: SendVideoNoteParams): Promise<Message>
-    {
-        return this.request ('sendVideoNote', params);
+    public async sendVideoNote(params: SendVideoNoteParams): Promise<Message> {
+        return this.request('sendVideoNote', params);
     }
 
     /**
@@ -312,18 +292,16 @@ export class TelegramBotRaw
      * album. Documents and audio files can be only grouped in an album with messages
      * of the same type. On success, an array of Messages that were sent is returned.    
      */
-    public async sendMediaGroup (params: SendMediaGroupParams): Promise<Array<Message>>
-    {
-        return this.request ('sendMediaGroup', params);
+    public async sendMediaGroup(params: SendMediaGroupParams): Promise<Array<Message>> {
+        return this.request('sendMediaGroup', params);
     }
 
     /**
      * Use this method to send point on the map. On success, the sent Message is
      * returned.    
      */
-    public async sendLocation (params: SendLocationParams): Promise<Message>
-    {
-        return this.request ('sendLocation', params);
+    public async sendLocation(params: SendLocationParams): Promise<Message> {
+        return this.request('sendLocation', params);
     }
 
     /**
@@ -332,9 +310,8 @@ export class TelegramBotRaw
      * stopMessageLiveLocation. On success, if the edited message is not an inline
      * message, the edited Message is returned, otherwise True is returned.    
      */
-    public async editMessageLiveLocation (params: EditMessageLiveLocationParams): Promise<Message | boolean>
-    {
-        return this.request ('editMessageLiveLocation', params);
+    public async editMessageLiveLocation(params: EditMessageLiveLocationParams): Promise<Message | boolean> {
+        return this.request('editMessageLiveLocation', params);
     }
 
     /**
@@ -342,44 +319,39 @@ export class TelegramBotRaw
      * expires. On success, if the message is not an inline message, the edited Message
      * is returned, otherwise True is returned.    
      */
-    public async stopMessageLiveLocation (params: StopMessageLiveLocationParams): Promise<Message | boolean>
-    {
-        return this.request ('stopMessageLiveLocation', params);
+    public async stopMessageLiveLocation(params: StopMessageLiveLocationParams): Promise<Message | boolean> {
+        return this.request('stopMessageLiveLocation', params);
     }
 
     /**
      * Use this method to send information about a venue. On success, the sent Message
      * is returned.    
      */
-    public async sendVenue (params: SendVenueParams): Promise<Message>
-    {
-        return this.request ('sendVenue', params);
+    public async sendVenue(params: SendVenueParams): Promise<Message> {
+        return this.request('sendVenue', params);
     }
 
     /**
      * Use this method to send phone contacts. On success, the sent Message is
      * returned.    
      */
-    public async sendContact (params: SendContactParams): Promise<Message>
-    {
-        return this.request ('sendContact', params);
+    public async sendContact(params: SendContactParams): Promise<Message> {
+        return this.request('sendContact', params);
     }
 
     /**
      * Use this method to send a native poll. On success, the sent Message is returned.    
      */
-    public async sendPoll (params: SendPollParams): Promise<Message>
-    {
-        return this.request ('sendPoll', params);
+    public async sendPoll(params: SendPollParams): Promise<Message> {
+        return this.request('sendPoll', params);
     }
 
     /**
      * Use this method to send an animated emoji that will display a random value. On
      * success, the sent Message is returned.    
      */
-    public async sendDice (params: SendDiceParams): Promise<Message>
-    {
-        return this.request ('sendDice', params);
+    public async sendDice(params: SendDiceParams): Promise<Message> {
+        return this.request('sendDice', params);
     }
 
     /**
@@ -393,18 +365,16 @@ export class TelegramBotRaw
      * this method when a response from the bot will take a noticeable amount of time
      * to arrive.    
      */
-    public async sendChatAction (params: SendChatActionParams): Promise<boolean>
-    {
-        return this.request ('sendChatAction', params);
+    public async sendChatAction(params: SendChatActionParams): Promise<boolean> {
+        return this.request('sendChatAction', params);
     }
 
     /**
      * Use this method to get a list of profile pictures for a user. Returns a
      * UserProfilePhotos object.    
      */
-    public async getUserProfilePhotos (params: GetUserProfilePhotosParams): Promise<UserProfilePhotos>
-    {
-        return this.request ('getUserProfilePhotos', params);
+    public async getUserProfilePhotos(params: GetUserProfilePhotosParams): Promise<UserProfilePhotos> {
+        return this.request('getUserProfilePhotos', params);
     }
 
     /**
@@ -416,9 +386,8 @@ export class TelegramBotRaw
      * hour. When the link expires, a new one can be requested by calling getFile
      * again.    
      */
-    public async getFile (params: GetFileParams): Promise<File>
-    {
-        return this.request ('getFile', params);
+    public async getFile(params: GetFileParams): Promise<File> {
+        return this.request('getFile', params);
     }
 
     /**
@@ -428,9 +397,8 @@ export class TelegramBotRaw
      * administrator in the chat for this to work and must have the appropriate
      * administrator rights. Returns True on success.    
      */
-    public async banChatMember (params: BanChatMemberParams): Promise<boolean>
-    {
-        return this.request ('banChatMember', params);
+    public async banChatMember(params: BanChatMemberParams): Promise<boolean> {
+        return this.request('banChatMember', params);
     }
 
     /**
@@ -442,9 +410,8 @@ export class TelegramBotRaw
      * they will also be removed from the chat. If you don't want this, use the
      * parameter only_if_banned. Returns True on success.    
      */
-    public async unbanChatMember (params: UnbanChatMemberParams): Promise<boolean>
-    {
-        return this.request ('unbanChatMember', params);
+    public async unbanChatMember(params: UnbanChatMemberParams): Promise<boolean> {
+        return this.request('unbanChatMember', params);
     }
 
     /**
@@ -453,9 +420,8 @@ export class TelegramBotRaw
      * administrator rights. Pass True for all permissions to lift restrictions from a
      * user. Returns True on success.    
      */
-    public async restrictChatMember (params: RestrictChatMemberParams): Promise<boolean>
-    {
-        return this.request ('restrictChatMember', params);
+    public async restrictChatMember(params: RestrictChatMemberParams): Promise<boolean> {
+        return this.request('restrictChatMember', params);
     }
 
     /**
@@ -464,18 +430,16 @@ export class TelegramBotRaw
      * appropriate administrator rights. Pass False for all boolean parameters to
      * demote a user. Returns True on success.    
      */
-    public async promoteChatMember (params: PromoteChatMemberParams): Promise<boolean>
-    {
-        return this.request ('promoteChatMember', params);
+    public async promoteChatMember(params: PromoteChatMemberParams): Promise<boolean> {
+        return this.request('promoteChatMember', params);
     }
 
     /**
      * Use this method to set a custom title for an administrator in a supergroup
      * promoted by the bot. Returns True on success.    
      */
-    public async setChatAdministratorCustomTitle (params: SetChatAdministratorCustomTitleParams): Promise<boolean>
-    {
-        return this.request ('setChatAdministratorCustomTitle', params);
+    public async setChatAdministratorCustomTitle(params: SetChatAdministratorCustomTitleParams): Promise<boolean> {
+        return this.request('setChatAdministratorCustomTitle', params);
     }
 
     /**
@@ -485,9 +449,8 @@ export class TelegramBotRaw
      * supergroup or channel for this to work and must have the appropriate
      * administrator rights. Returns True on success.    
      */
-    public async banChatSenderChat (params: BanChatSenderChatParams): Promise<boolean>
-    {
-        return this.request ('banChatSenderChat', params);
+    public async banChatSenderChat(params: BanChatSenderChatParams): Promise<boolean> {
+        return this.request('banChatSenderChat', params);
     }
 
     /**
@@ -495,9 +458,8 @@ export class TelegramBotRaw
      * channel. The bot must be an administrator for this to work and must have the
      * appropriate administrator rights. Returns True on success.    
      */
-    public async unbanChatSenderChat (params: UnbanChatSenderChatParams): Promise<boolean>
-    {
-        return this.request ('unbanChatSenderChat', params);
+    public async unbanChatSenderChat(params: UnbanChatSenderChatParams): Promise<boolean> {
+        return this.request('unbanChatSenderChat', params);
     }
 
     /**
@@ -505,9 +467,8 @@ export class TelegramBotRaw
      * an administrator in the group or a supergroup for this to work and must have the
      * can_restrict_members administrator rights. Returns True on success.    
      */
-    public async setChatPermissions (params: SetChatPermissionsParams): Promise<boolean>
-    {
-        return this.request ('setChatPermissions', params);
+    public async setChatPermissions(params: SetChatPermissionsParams): Promise<boolean> {
+        return this.request('setChatPermissions', params);
     }
 
     /**
@@ -516,9 +477,8 @@ export class TelegramBotRaw
      * for this to work and must have the appropriate administrator rights. Returns the
      * new invite link as String on success.    
      */
-    public async exportChatInviteLink (params: ExportChatInviteLinkParams): Promise<string>
-    {
-        return this.request ('exportChatInviteLink', params);
+    public async exportChatInviteLink(params: ExportChatInviteLinkParams): Promise<string> {
+        return this.request('exportChatInviteLink', params);
     }
 
     /**
@@ -527,9 +487,8 @@ export class TelegramBotRaw
      * administrator rights. The link can be revoked using the method
      * revokeChatInviteLink. Returns the new invite link as ChatInviteLink object.    
      */
-    public async createChatInviteLink (params: CreateChatInviteLinkParams): Promise<ChatInviteLink>
-    {
-        return this.request ('createChatInviteLink', params);
+    public async createChatInviteLink(params: CreateChatInviteLinkParams): Promise<ChatInviteLink> {
+        return this.request('createChatInviteLink', params);
     }
 
     /**
@@ -538,9 +497,8 @@ export class TelegramBotRaw
      * appropriate administrator rights. Returns the edited invite link as a
      * ChatInviteLink object.    
      */
-    public async editChatInviteLink (params: EditChatInviteLinkParams): Promise<ChatInviteLink>
-    {
-        return this.request ('editChatInviteLink', params);
+    public async editChatInviteLink(params: EditChatInviteLinkParams): Promise<ChatInviteLink> {
+        return this.request('editChatInviteLink', params);
     }
 
     /**
@@ -549,9 +507,8 @@ export class TelegramBotRaw
      * administrator in the chat for this to work and must have the appropriate
      * administrator rights. Returns the revoked invite link as ChatInviteLink object.    
      */
-    public async revokeChatInviteLink (params: RevokeChatInviteLinkParams): Promise<ChatInviteLink>
-    {
-        return this.request ('revokeChatInviteLink', params);
+    public async revokeChatInviteLink(params: RevokeChatInviteLinkParams): Promise<ChatInviteLink> {
+        return this.request('revokeChatInviteLink', params);
     }
 
     /**
@@ -559,9 +516,8 @@ export class TelegramBotRaw
      * in the chat for this to work and must have the can_invite_users administrator
      * right. Returns True on success.    
      */
-    public async approveChatJoinRequest (params: ApproveChatJoinRequestParams): Promise<boolean>
-    {
-        return this.request ('approveChatJoinRequest', params);
+    public async approveChatJoinRequest(params: ApproveChatJoinRequestParams): Promise<boolean> {
+        return this.request('approveChatJoinRequest', params);
     }
 
     /**
@@ -569,9 +525,8 @@ export class TelegramBotRaw
      * in the chat for this to work and must have the can_invite_users administrator
      * right. Returns True on success.    
      */
-    public async declineChatJoinRequest (params: DeclineChatJoinRequestParams): Promise<boolean>
-    {
-        return this.request ('declineChatJoinRequest', params);
+    public async declineChatJoinRequest(params: DeclineChatJoinRequestParams): Promise<boolean> {
+        return this.request('declineChatJoinRequest', params);
     }
 
     /**
@@ -579,9 +534,8 @@ export class TelegramBotRaw
      * for private chats. The bot must be an administrator in the chat for this to work
      * and must have the appropriate administrator rights. Returns True on success.    
      */
-    public async setChatPhoto (params: SetChatPhotoParams): Promise<boolean>
-    {
-        return this.request ('setChatPhoto', params);
+    public async setChatPhoto(params: SetChatPhotoParams): Promise<boolean> {
+        return this.request('setChatPhoto', params);
     }
 
     /**
@@ -589,9 +543,8 @@ export class TelegramBotRaw
      * chats. The bot must be an administrator in the chat for this to work and must
      * have the appropriate administrator rights. Returns True on success.    
      */
-    public async deleteChatPhoto (params: DeleteChatPhotoParams): Promise<boolean>
-    {
-        return this.request ('deleteChatPhoto', params);
+    public async deleteChatPhoto(params: DeleteChatPhotoParams): Promise<boolean> {
+        return this.request('deleteChatPhoto', params);
     }
 
     /**
@@ -599,9 +552,8 @@ export class TelegramBotRaw
      * private chats. The bot must be an administrator in the chat for this to work and
      * must have the appropriate administrator rights. Returns True on success.    
      */
-    public async setChatTitle (params: SetChatTitleParams): Promise<boolean>
-    {
-        return this.request ('setChatTitle', params);
+    public async setChatTitle(params: SetChatTitleParams): Promise<boolean> {
+        return this.request('setChatTitle', params);
     }
 
     /**
@@ -609,9 +561,8 @@ export class TelegramBotRaw
      * The bot must be an administrator in the chat for this to work and must have the
      * appropriate administrator rights. Returns True on success.    
      */
-    public async setChatDescription (params: SetChatDescriptionParams): Promise<boolean>
-    {
-        return this.request ('setChatDescription', params);
+    public async setChatDescription(params: SetChatDescriptionParams): Promise<boolean> {
+        return this.request('setChatDescription', params);
     }
 
     /**
@@ -621,9 +572,8 @@ export class TelegramBotRaw
      * supergroup or 'can_edit_messages' administrator right in a channel. Returns True
      * on success.    
      */
-    public async pinChatMessage (params: PinChatMessageParams): Promise<boolean>
-    {
-        return this.request ('pinChatMessage', params);
+    public async pinChatMessage(params: PinChatMessageParams): Promise<boolean> {
+        return this.request('pinChatMessage', params);
     }
 
     /**
@@ -633,9 +583,8 @@ export class TelegramBotRaw
      * supergroup or 'can_edit_messages' administrator right in a channel. Returns True
      * on success.    
      */
-    public async unpinChatMessage (params: UnpinChatMessageParams): Promise<boolean>
-    {
-        return this.request ('unpinChatMessage', params);
+    public async unpinChatMessage(params: UnpinChatMessageParams): Promise<boolean> {
+        return this.request('unpinChatMessage', params);
     }
 
     /**
@@ -644,18 +593,16 @@ export class TelegramBotRaw
      * work and must have the 'can_pin_messages' administrator right in a supergroup or
      * 'can_edit_messages' administrator right in a channel. Returns True on success.    
      */
-    public async unpinAllChatMessages (params: UnpinAllChatMessagesParams): Promise<boolean>
-    {
-        return this.request ('unpinAllChatMessages', params);
+    public async unpinAllChatMessages(params: UnpinAllChatMessagesParams): Promise<boolean> {
+        return this.request('unpinAllChatMessages', params);
     }
 
     /**
      * Use this method for your bot to leave a group, supergroup or channel. Returns
      * True on success.    
      */
-    public async leaveChat (params: LeaveChatParams): Promise<boolean>
-    {
-        return this.request ('leaveChat', params);
+    public async leaveChat(params: LeaveChatParams): Promise<boolean> {
+        return this.request('leaveChat', params);
     }
 
     /**
@@ -663,9 +610,8 @@ export class TelegramBotRaw
      * the user for one-on-one conversations, current username of a user, group or
      * channel, etc.). Returns a Chat object on success.    
      */
-    public async getChat (params: GetChatParams): Promise<Chat>
-    {
-        return this.request ('getChat', params);
+    public async getChat(params: GetChatParams): Promise<Chat> {
+        return this.request('getChat', params);
     }
 
     /**
@@ -674,26 +620,23 @@ export class TelegramBotRaw
      * administrators except other bots. If the chat is a group or a supergroup and no
      * administrators were appointed, only the creator will be returned.    
      */
-    public async getChatAdministrators (params: GetChatAdministratorsParams): Promise<Array<ChatMember>>
-    {
-        return this.request ('getChatAdministrators', params);
+    public async getChatAdministrators(params: GetChatAdministratorsParams): Promise<Array<ChatMember>> {
+        return this.request('getChatAdministrators', params);
     }
 
     /**
      * Use this method to get the number of members in a chat. Returns Int on success.    
      */
-    public async getChatMemberCount (params: GetChatMemberCountParams): Promise<number>
-    {
-        return this.request ('getChatMemberCount', params);
+    public async getChatMemberCount(params: GetChatMemberCountParams): Promise<number> {
+        return this.request('getChatMemberCount', params);
     }
 
     /**
      * Use this method to get information about a member of a chat. Returns a
      * ChatMember object on success.    
      */
-    public async getChatMember (params: GetChatMemberParams): Promise<ChatMember>
-    {
-        return this.request ('getChatMember', params);
+    public async getChatMember(params: GetChatMemberParams): Promise<ChatMember> {
+        return this.request('getChatMember', params);
     }
 
     /**
@@ -703,9 +646,8 @@ export class TelegramBotRaw
      * getChat requests to check if the bot can use this method. Returns True on
      * success.    
      */
-    public async setChatStickerSet (params: SetChatStickerSetParams): Promise<boolean>
-    {
-        return this.request ('setChatStickerSet', params);
+    public async setChatStickerSet(params: SetChatStickerSetParams): Promise<boolean> {
+        return this.request('setChatStickerSet', params);
     }
 
     /**
@@ -715,9 +657,8 @@ export class TelegramBotRaw
      * getChat requests to check if the bot can use this method. Returns True on
      * success.    
      */
-    public async deleteChatStickerSet (params: DeleteChatStickerSetParams): Promise<boolean>
-    {
-        return this.request ('deleteChatStickerSet', params);
+    public async deleteChatStickerSet(params: DeleteChatStickerSetParams): Promise<boolean> {
+        return this.request('deleteChatStickerSet', params);
     }
 
     /**
@@ -729,9 +670,8 @@ export class TelegramBotRaw
      * you may use links like t.me/your_bot?start=XXXX that open your bot with a
      * parameter.    
      */
-    public async answerCallbackQuery (params: AnswerCallbackQueryParams): Promise<boolean>
-    {
-        return this.request ('answerCallbackQuery', params);
+    public async answerCallbackQuery(params: AnswerCallbackQueryParams): Promise<boolean> {
+        return this.request('answerCallbackQuery', params);
     }
 
     /**
@@ -739,9 +679,8 @@ export class TelegramBotRaw
      * https://core.telegram.org/bots#commands for more details about bot commands.
      * Returns True on success.    
      */
-    public async setMyCommands (params: SetMyCommandsParams): Promise<boolean>
-    {
-        return this.request ('setMyCommands', params);
+    public async setMyCommands(params: SetMyCommandsParams): Promise<boolean> {
+        return this.request('setMyCommands', params);
     }
 
     /**
@@ -749,9 +688,8 @@ export class TelegramBotRaw
      * user language. After deletion, higher level commands will be shown to affected
      * users. Returns True on success.    
      */
-    public async deleteMyCommands (params: DeleteMyCommandsParams): Promise<boolean>
-    {
-        return this.request ('deleteMyCommands', params);
+    public async deleteMyCommands(params: DeleteMyCommandsParams): Promise<boolean> {
+        return this.request('deleteMyCommands', params);
     }
 
     /**
@@ -759,9 +697,8 @@ export class TelegramBotRaw
      * scope and user language. Returns Array of BotCommand on success. If commands
      * aren't set, an empty list is returned.    
      */
-    public async getMyCommands (params: GetMyCommandsParams): Promise<Array<BotCommand>>
-    {
-        return this.request ('getMyCommands', params);
+    public async getMyCommands(params: GetMyCommandsParams): Promise<Array<BotCommand>> {
+        return this.request('getMyCommands', params);
     }
 
     /**
@@ -769,9 +706,8 @@ export class TelegramBotRaw
      * message is not an inline message, the edited Message is returned, otherwise True
      * is returned.    
      */
-    public async editMessageText (params: EditMessageTextParams): Promise<Message | boolean>
-    {
-        return this.request ('editMessageText', params);
+    public async editMessageText(params: EditMessageTextParams): Promise<Message | boolean> {
+        return this.request('editMessageText', params);
     }
 
     /**
@@ -779,9 +715,8 @@ export class TelegramBotRaw
      * is not an inline message, the edited Message is returned, otherwise True is
      * returned.    
      */
-    public async editMessageCaption (params: EditMessageCaptionParams): Promise<Message | boolean>
-    {
-        return this.request ('editMessageCaption', params);
+    public async editMessageCaption(params: EditMessageCaptionParams): Promise<Message | boolean> {
+        return this.request('editMessageCaption', params);
     }
 
     /**
@@ -793,9 +728,8 @@ export class TelegramBotRaw
      * edited message is not an inline message, the edited Message is returned,
      * otherwise True is returned.    
      */
-    public async editMessageMedia (params: EditMessageMediaParams): Promise<Message | boolean>
-    {
-        return this.request ('editMessageMedia', params);
+    public async editMessageMedia(params: EditMessageMediaParams): Promise<Message | boolean> {
+        return this.request('editMessageMedia', params);
     }
 
     /**
@@ -803,18 +737,16 @@ export class TelegramBotRaw
      * edited message is not an inline message, the edited Message is returned,
      * otherwise True is returned.    
      */
-    public async editMessageReplyMarkup (params: EditMessageReplyMarkupParams): Promise<Message | boolean>
-    {
-        return this.request ('editMessageReplyMarkup', params);
+    public async editMessageReplyMarkup(params: EditMessageReplyMarkupParams): Promise<Message | boolean> {
+        return this.request('editMessageReplyMarkup', params);
     }
 
     /**
      * Use this method to stop a poll which was sent by the bot. On success, the
      * stopped Poll is returned.    
      */
-    public async stopPoll (params: StopPollParams): Promise<Poll>
-    {
-        return this.request ('stopPoll', params);
+    public async stopPoll(params: StopPollParams): Promise<Poll> {
+        return this.request('stopPoll', params);
     }
 
     /**
@@ -828,27 +760,24 @@ export class TelegramBotRaw
      * message there. - If the bot has can_delete_messages permission in a supergroup
      * or a channel, it can delete any message there. Returns True on success.    
      */
-    public async deleteMessage (params: DeleteMessageParams): Promise<boolean>
-    {
-        return this.request ('deleteMessage', params);
+    public async deleteMessage(params: DeleteMessageParams): Promise<boolean> {
+        return this.request('deleteMessage', params);
     }
 
     /**
      * Use this method to send static .WEBP or animated .TGS stickers. On success, the
      * sent Message is returned.    
      */
-    public async sendSticker (params: SendStickerParams): Promise<Message>
-    {
-        return this.request ('sendSticker', params);
+    public async sendSticker(params: SendStickerParams): Promise<Message> {
+        return this.request('sendSticker', params);
     }
 
     /**
      * Use this method to get a sticker set. On success, a StickerSet object is
      * returned.    
      */
-    public async getStickerSet (params: GetStickerSetParams): Promise<StickerSet>
-    {
-        return this.request ('getStickerSet', params);
+    public async getStickerSet(params: GetStickerSetParams): Promise<StickerSet> {
+        return this.request('getStickerSet', params);
     }
 
     /**
@@ -856,9 +785,8 @@ export class TelegramBotRaw
      * createNewStickerSet and addStickerToSet methods (can be used multiple times).
      * Returns the uploaded File on success.    
      */
-    public async uploadStickerFile (params: UploadStickerFileParams): Promise<File>
-    {
-        return this.request ('uploadStickerFile', params);
+    public async uploadStickerFile(params: UploadStickerFileParams): Promise<File> {
+        return this.request('uploadStickerFile', params);
     }
 
     /**
@@ -866,9 +794,8 @@ export class TelegramBotRaw
      * able to edit the sticker set thus created. You must use exactly one of the
      * fields png_sticker or tgs_sticker. Returns True on success.    
      */
-    public async createNewStickerSet (params: CreateNewStickerSetParams): Promise<boolean>
-    {
-        return this.request ('createNewStickerSet', params);
+    public async createNewStickerSet(params: CreateNewStickerSetParams): Promise<boolean> {
+        return this.request('createNewStickerSet', params);
     }
 
     /**
@@ -878,53 +805,47 @@ export class TelegramBotRaw
      * up to 50 stickers. Static sticker sets can have up to 120 stickers. Returns True
      * on success.    
      */
-    public async addStickerToSet (params: AddStickerToSetParams): Promise<boolean>
-    {
-        return this.request ('addStickerToSet', params);
+    public async addStickerToSet(params: AddStickerToSetParams): Promise<boolean> {
+        return this.request('addStickerToSet', params);
     }
 
     /**
      * Use this method to move a sticker in a set created by the bot to a specific
      * position. Returns True on success.    
      */
-    public async setStickerPositionInSet (params: SetStickerPositionInSetParams): Promise<boolean>
-    {
-        return this.request ('setStickerPositionInSet', params);
+    public async setStickerPositionInSet(params: SetStickerPositionInSetParams): Promise<boolean> {
+        return this.request('setStickerPositionInSet', params);
     }
 
     /**
      * Use this method to delete a sticker from a set created by the bot. Returns True
      * on success.    
      */
-    public async deleteStickerFromSet (params: DeleteStickerFromSetParams): Promise<boolean>
-    {
-        return this.request ('deleteStickerFromSet', params);
+    public async deleteStickerFromSet(params: DeleteStickerFromSetParams): Promise<boolean> {
+        return this.request('deleteStickerFromSet', params);
     }
 
     /**
      * Use this method to set the thumbnail of a sticker set. Animated thumbnails can
      * be set for animated sticker sets only. Returns True on success.    
      */
-    public async setStickerSetThumb (params: SetStickerSetThumbParams): Promise<boolean>
-    {
-        return this.request ('setStickerSetThumb', params);
+    public async setStickerSetThumb(params: SetStickerSetThumbParams): Promise<boolean> {
+        return this.request('setStickerSetThumb', params);
     }
 
     /**
      * Use this method to send answers to an inline query. On success, True is
      * returned. No more than 50 results per query are allowed.    
      */
-    public async answerInlineQuery (params: AnswerInlineQueryParams): Promise<boolean>
-    {
-        return this.request ('answerInlineQuery', params);
+    public async answerInlineQuery(params: AnswerInlineQueryParams): Promise<boolean> {
+        return this.request('answerInlineQuery', params);
     }
 
     /**
      * Use this method to send invoices. On success, the sent Message is returned.    
      */
-    public async sendInvoice (params: SendInvoiceParams): Promise<Message>
-    {
-        return this.request ('sendInvoice', params);
+    public async sendInvoice(params: SendInvoiceParams): Promise<Message> {
+        return this.request('sendInvoice', params);
     }
 
     /**
@@ -933,9 +854,8 @@ export class TelegramBotRaw
      * field to the bot. Use this method to reply to shipping queries. On success, True
      * is returned.    
      */
-    public async answerShippingQuery (params: AnswerShippingQueryParams): Promise<boolean>
-    {
-        return this.request ('answerShippingQuery', params);
+    public async answerShippingQuery(params: AnswerShippingQueryParams): Promise<boolean> {
+        return this.request('answerShippingQuery', params);
     }
 
     /**
@@ -945,9 +865,8 @@ export class TelegramBotRaw
      * success, True is returned. Note: The Bot API must receive an answer within 10
      * seconds after the pre-checkout query was sent.    
      */
-    public async answerPreCheckoutQuery (params: AnswerPreCheckoutQueryParams): Promise<boolean>
-    {
-        return this.request ('answerPreCheckoutQuery', params);
+    public async answerPreCheckoutQuery(params: AnswerPreCheckoutQueryParams): Promise<boolean> {
+        return this.request('answerPreCheckoutQuery', params);
     }
 
     /**
@@ -960,17 +879,15 @@ export class TelegramBotRaw
      * scan shows evidence of tampering, etc. Supply some details in the error message
      * to make sure the user knows how to correct the issues.    
      */
-    public async setPassportDataErrors (params: SetPassportDataErrorsParams): Promise<boolean>
-    {
-        return this.request ('setPassportDataErrors', params);
+    public async setPassportDataErrors(params: SetPassportDataErrorsParams): Promise<boolean> {
+        return this.request('setPassportDataErrors', params);
     }
 
     /**
      * Use this method to send a game. On success, the sent Message is returned.    
      */
-    public async sendGame (params: SendGameParams): Promise<Message>
-    {
-        return this.request ('sendGame', params);
+    public async sendGame(params: SendGameParams): Promise<Message> {
+        return this.request('sendGame', params);
     }
 
     /**
@@ -979,9 +896,8 @@ export class TelegramBotRaw
      * otherwise True is returned. Returns an error, if the new score is not greater
      * than the user's current score in the chat and force is False.    
      */
-    public async setGameScore (params: SetGameScoreParams): Promise<Message | boolean>
-    {
-        return this.request ('setGameScore', params);
+    public async setGameScore(params: SetGameScoreParams): Promise<Message | boolean> {
+        return this.request('setGameScore', params);
     }
 
     /**
@@ -992,9 +908,8 @@ export class TelegramBotRaw
      * the top three users if the user and his neighbors are not among them. Please
      * note that this behavior is subject to change.    
      */
-    public async getGameHighScores (params: GetGameHighScoresParams): Promise<Array<GameHighScore>>
-    {
-        return this.request ('getGameHighScores', params);
+    public async getGameHighScores(params: GetGameHighScoresParams): Promise<Array<GameHighScore>> {
+        return this.request('getGameHighScores', params);
     }
 
 }
