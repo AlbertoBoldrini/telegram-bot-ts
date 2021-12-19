@@ -1,12 +1,12 @@
 
-const puppeteer = require('puppeteer-core');
+const puppeteer = require('puppeteer');
 const fs = require('fs');
 
 
 (async () => {
     const browser = await puppeteer.launch(
     {
-        executablePath: 'chromium',
+        executablePath: '/usr/bin/google-chrome-stable',
         headless: true,
     });
 
@@ -103,6 +103,19 @@ const fs = require('fs');
             return 'any';
         }
 
+        /**
+         * Find the return value in the text
+         */
+        function findReturnValue(desc)
+        {
+            if (desc.includes('Returns True on success'))
+                return 'boolean'
+            else if (desc.includes('Returns Int on success.'))
+                return 'number'
+
+            return '???'
+        }
+
         /**  
          * Create an empty interface with a comment and return the code 
          */
@@ -118,8 +131,11 @@ const fs = require('fs');
             'deleteWebhook': 'boolean',
             'getWebhookInfo': 'WebhookInfo',
             'getMe': 'User',
+            'logOut': 'boolean',
+            'close': 'boolean',
             'sendMessage': 'Message',
             'forwardMessage': 'Message',
+            'copyMessage': 'MessageId',
             'sendPhoto': 'Message',
             'sendAudio': 'Message',
             'sendDocument': 'Message',
@@ -133,14 +149,25 @@ const fs = require('fs');
             'stopMessageLiveLocation': 'Message | boolean',
             'sendVenue': 'Message',
             'sendContact': 'Message',
+            'sendPoll': 'Message',
+            'sendDice': 'Message',
             'sendChatAction': 'boolean',
             'getUserProfilePhotos': 'UserProfilePhotos',
             'getFile': 'File',
-            'kickChatMember': 'boolean',
+            'banChatMember': 'boolean',
             'unbanChatMember': 'boolean',
             'restrictChatMember': 'boolean',
             'promoteChatMember': 'boolean',
+            'setChatAdministratorCustomTitle': 'boolean',
+            'banChatSenderChat': 'boolean',
+            'unbanChatSenderChat': 'boolean',
+            'setChatPermissions': 'boolean',
             'exportChatInviteLink': 'string',
+            'createChatInviteLink': 'ChatInviteLink',
+            'editChatInviteLink': 'ChatInviteLink',
+            'revokeChatInviteLink': 'ChatInviteLink',
+            'approveChatJoinRequest': 'boolean',
+            'declineChatJoinRequest': 'boolean',
             'setChatPhoto': 'boolean',
             'deleteChatPhoto': 'boolean',
             'setChatTitle': 'boolean',
@@ -155,10 +182,12 @@ const fs = require('fs');
             'setChatStickerSet': 'boolean',
             'deleteChatStickerSet': 'boolean',
             'answerCallbackQuery': 'boolean',
+            'getMyCommands': 'Array<BotCommand>',
             'editMessageText': 'Message | boolean',
             'editMessageCaption': 'Message | boolean',
             'editMessageMedia': 'Message | boolean',
             'editMessageReplyMarkup': 'Message | boolean',
+            'stopPoll': 'Poll',
             'deleteMessage': 'boolean',
             'sendSticker': 'Message',
             'getStickerSet': 'StickerSet',
@@ -199,8 +228,6 @@ const fs = require('fs');
                 table = table.nextElementSibling;
             }
 
-            
-
             if (startsWithLowercase(interfaceName))
             {
                 methodName = interfaceName;
@@ -208,16 +235,22 @@ const fs = require('fs');
                 interfaceName += 'Params';
                 interfaceName = interfaceName.charAt(0).toUpperCase() + interfaceName.substr(1);
 
+                
+                if (returnTypes[methodName])
+                    returnType = returnTypes[methodName]
+                else
+                    returnType = findReturnValue(description)
+
 
                 if (table && table.tagName === 'TABLE')
                 {
-                    methods.push (makeComment(1, description), '    public async ', methodName, ' (params: ', interfaceName, '): Promise<', returnTypes[methodName] ,'>\n');
+                    methods.push (makeComment(1, description), '    public async ', methodName, ' (params: ', interfaceName, '): Promise<', returnType ,'>\n');
                     methods.push ('    {\n        return this.request (\'', methodName, '\', params);\n    }\n');
                 }
 
                 else
                 {
-                    methods.push (makeComment(1, description), '    public async ', methodName, ' (): Promise<', returnTypes[methodName] ,'>\n');
+                    methods.push (makeComment(1, description), '    public async ', methodName, ' (): Promise<', returnType ,'>\n');
                     methods.push ('    {\n        return this.request (\'', methodName, '\', {});\n    }\n');
                 }
             }
@@ -232,6 +265,12 @@ const fs = require('fs');
                 
                 if (interfaceName.startsWith ('PassportElementError'))
                     interfaceName += ' extends PassportElementError';
+
+                if (interfaceName.startsWith ('BotCommandScope'))
+                    interfaceName += ' extends BotCommandScope';
+
+                if (interfaceName.startsWith ('ChatMember'))
+                    interfaceName += ' extends ChatMember';
                 
                 if (interfaceName.startsWith ('InputMedia'))
                     interfaceName += ' extends InputMedia';
@@ -282,6 +321,10 @@ const fs = require('fs');
         interfaces.push (makeEmptyInferface('InputMessageContent', 'This object represents the content of a message to be sent as a result of an inline query.'));
         interfaces.push (makeEmptyInferface('InlineQueryResult', 'This object represents one result of an inline query.'));
         interfaces.push (makeEmptyInferface('PassportElementError', 'This object represents an error in the Telegram Passport element which was submitted that should be resolved by the user.'));
+        interfaces.push (makeEmptyInferface('ChatMember', 'This object contains information about one member of a chat. Currently, the following 6 types of chat members are supported.'));
+        interfaces.push (makeEmptyInferface('VoiceChatStarted', 'This object represents a service message about a voice chat started in the chat. Currently holds no information.'));
+        interfaces.push (makeEmptyInferface('BotCommandScope', 'This object represents the scope to which bot commands are applied.'));
+
 
         return { methods: methods.join(''), interfaces: interfaces.join('') };
     });
